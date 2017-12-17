@@ -4,7 +4,6 @@ from __future__ import print_function
 from requests import get
 
 # AA TODO:
-# - convert: .crypto btc in aud
 # - alert: .crypto alert btc 50000
 
 # 'https://api.coinmarketcap.com/v1/ticker/?limit=10'
@@ -46,20 +45,27 @@ names = ['bitcoin', 'ethereum', 'bitcoin cash', 'ripple', 'litecoin',
         'substratum', 'peercoin', 'quantstamp', 'metaverse etp', 'revain',
         'pura', 'blocknet', 'storj', 'aion', 'bitbay']
 
-def get_crypto_all():
+def get_crypto(query=[]):
+    if len(query) == 3 and query[1] == 'in':
+        return ", ".join(get_crypto_convert(query[0], query[2]))
+    else:
+        return ", ".join(get_crypto_specific(query))
+
+def get_crypto_specific(searchlist=[]):
     coins = get(coinmarketcap_all_url).json()
+    if len(searchlist):
+        search = list(map(lambda q: q.lower(), searchlist))
+        filtered_coins = list(filter(lambda c: (c['name'].lower() in search) or (c['symbol'].lower() in search), coins))
+        if len(filtered_coins):
+            coins = filtered_coins
     prices = list(map(lambda c: c['symbol'] + ': ' + c['price_usd'], coins))
     return prices
 
-def get_crypto_specific(query):
-    search = list(map(lambda q: q.lower(), query))
-    coins = get(coinmarketcap_all_url).json()
-    coins = list(filter(lambda c: (c['name'].lower() in search) or (c['symbol'].lower() in search), coins))
-    prices = list(map(lambda c: c['symbol'] + ': ' + c['price_usd'], coins))
+def get_crypto_convert(symbol, currency):
+    coins = get(coinmarketcap_convert_url.format(symbol, currency)).json()
+    pricekey = 'price_' + currency.lower()
+    prices = list(map(lambda c: c['symbol'] + ': ' + c[pricekey] + ' ' + currency, coins))
     return prices
-
-def get_crypto_convert(query):
-    return 42
 
 try:
     import sopel.module
@@ -72,21 +78,14 @@ else:
     def f_crypto(bot, trigger):
         """Look up crypto prices with coinmarketcap"""
         query = trigger.group(2).strip().lower().split(" ")
-        if len(query) > 1:
-            crypto = get_crypto_specific(query)
-        else:
-            crypto = get_crypto_all()
+        crypto = get_crypto(query)
         if len(crypto):
-            bot.say(", ".join(crypto))
+            bot.say(crypto)
         else:
             bot.say("Couldn't query coinmarketcap with: " + query)
         return sopel.module.NOLIMIT
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 1:
-        query = sys.argv[1:]
-        crypto = get_crypto_specific(query)
-    else:
-        crypto = get_crypto_all()
-    print(", ".join(crypto))
+    crypto = get_crypto(sys.argv[1:])
+    print(crypto)
