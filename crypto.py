@@ -77,7 +77,7 @@ else:
     @sopel.module.example('.crypto btc eth neo')
     def f_crypto(bot, trigger):
         """Look up crypto prices with coinmarketcap"""
-        query = trigger.group(2).strip().lower().split(" ")
+        query = (trigger.group(2) or "").strip().lower().split(" ")
         crypto = get_crypto(query)
         if len(crypto):
             bot.say(crypto)
