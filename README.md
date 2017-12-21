@@ -4,6 +4,7 @@ Cryptocoin lookup and alert script for Sopel IRC bot.
 
 ## Install
 
+Copy crypto.sh to your sopel modules directory.
 Requires the requests module.
 
 ```
@@ -24,3 +25,43 @@ BTC: 19448.9, ETH: 716.977, BCH: 1811.08, XRP: 0.749863, LTC: 316.18, ADA: 0.396
 
 ```
 
+## Docker ...
+
+Run the Sopel IRC bot in a Docker container with this module added
+
+### Building
+
+```
+docker build -t sopel-crypto .
+```
+
+### Running
+
+Create a directory where you want to store the config, log and data files (can
+also be a volume container); adjust the name to your likings:
+
+```
+mkdir mybot
+```
+
+Initialize the bot configuration:
+
+```
+docker run --rm -it -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto sopel -w
+```
+
+Create and run the bot:
+
+```
+docker run -d --name mybot -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto
+```
+
+If you want it to autostart, add `--restart=always`.
+
+### Running Sopel commands
+
+You can, at any time, run specific Sopel commands. For example:
+
+```
+docker run --rm -it -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto sopel --configure-modules
+```
