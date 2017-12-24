@@ -32,36 +32,30 @@ Run the Sopel IRC bot in a Docker container with this module added
 ### Building
 
 ```
-docker build -t sopel-crypto .
+make
 ```
 
 ### Running
 
-Create a directory where you want to store the config, log and data files (can
-also be a volume container); adjust the name to your likings:
+Creates a config file and asks for various settings and then starts the bot.
+(Adjust the botname in the Makefile if desired).
 
 ```
-mkdir mybot
+make config run
 ```
 
-Initialize the bot configuration:
+Stop or restart the bot
 
 ```
-docker run --rm -it -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto sopel -w
-```
+make stop
 
-Create and run the bot:
-
+make restart
 ```
-docker run -d --name mybot -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto
-```
-
-If you want it to autostart, add `--restart=always`.
 
 ### Running Sopel commands
 
 You can, at any time, run specific Sopel commands. For example:
 
 ```
-docker run --rm -it -v $(pwd)/mybot:/home/sopel/.sopel sopel-crypto sopel --configure-modules
+docker run --rm -it -v $(pwd)/donotbot:/home/sopel/.sopel sopel-crypto sopel --help
 ```
