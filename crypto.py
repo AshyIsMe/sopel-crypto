@@ -124,19 +124,21 @@ else:
 
         def monitor(bot):
             time.sleep(5)
+            print(time.time(), "monitor() starting")
             while True:
+                print(time.time(), "monitor() len(bot.alerts_db): ", len(bot.alerts_db))
                 if len(bot.alerts_db):
                     coins = {c['symbol']: c for c in get(coinmarketcap_all_url).json()}
                 alerted = False
-                for (symbol, price, comparison) in bot.alerts_db:
-                    if cmp(comparison, float(coins[symbol]['price_usd']), float(price)):
+                for (symbol, price, comparison) in list(bot.alerts_db):
+                    if cmp(comparison, float(coins[symbol.upper()]['price_usd']), float(price)):
                         for (unixtime, original_price, channel, nick) in bot.alerts_db[symbol, price, comparison]:
                             if comparison == 'gte':
                                 message = "{} {} USD. Up from {} USD on {}."
                             elif comparison == 'lte':
                                 message = "{} {} USD. Down from {} USD on {}."
-                            date = time.asctime(time.localtime(unixtime))
-                            message = message.format(symbol, coins[symbol]['price_usd'], original_price, date)
+                            date = time.asctime(time.localtime(float(unixtime)))
+                            message = message.format(symbol, coins[symbol.upper()]['price_usd'], original_price, date)
                             bot.msg(channel, nick + ': ' + message)
                         del bot.alerts_db[symbol, price, comparison]
                         alerted = True
@@ -144,7 +146,8 @@ else:
                 if alerted:
                     dump_database(bot.alerts_fn, bot.alerts_db)
 
-                time.sleep(60 * 10)
+                #time.sleep(60 * 10)
+                time.sleep(60 * 5)
 
         targs = (bot,)
         t = threading.Thread(target=monitor, args=targs)
@@ -169,7 +172,7 @@ else:
             bot.say("No arguments given for alert command.")
             return NOLIMIT
         regex = re.compile(r'([a-zA-Z]*)\s*(\d+\.?\d*)')
-        match = regex.match(trigger.group(2))
+        match = regex.match(trigger.group(2).upper())
         if not match:
             bot.reply("Sorry, but I didn't understand your input.")
             return NOLIMIT
