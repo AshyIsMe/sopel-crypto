@@ -11,6 +11,8 @@ import collections
 import codecs
 from datetime import datetime
 
+DEBUG = False
+
 # 'https://api.coinmarketcap.com/v1/ticker/?limit=10'
 coinmarketcap_all_url = 'https://api.coinmarketcap.com/v1/ticker/'
 coinmarketcap_specific_url = 'https://api.coinmarketcap.com/v1/ticker/{}/'
@@ -124,9 +126,9 @@ else:
 
         def monitor(bot):
             time.sleep(5)
-            print(time.time(), "monitor() starting")
+            if DEBUG: print(time.time(), "monitor() starting")
             while True:
-                print(time.time(), "monitor() len(bot.alerts_db): ", len(bot.alerts_db))
+                if DEBUG: print(time.time(), "monitor() len(bot.alerts_db): ", len(bot.alerts_db))
                 if len(bot.alerts_db):
                     coins = {c['symbol']: c for c in get(coinmarketcap_all_url).json()}
                 alerted = False
