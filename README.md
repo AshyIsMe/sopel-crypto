@@ -41,6 +41,8 @@ Creates a config file and asks for various settings and then starts the bot.
 (Adjust the botname in the Makefile if desired).
 
 ```
+mkdir -p donotbot/modules
+cp crypto.py donotbot/modules
 make config run
 ```
 
