@@ -111,48 +111,38 @@ else:
         bot.alerts_fn = filename(bot)
         bot.alerts_db = load_database(bot.alerts_fn)
 
-        def cmp(op, a, b):
-            if op == 'gte':
-                return a >= b
-            elif op == 'lte':
-                return a <= b
-            elif op == 'gt':
-                return a > b
-            elif op == 'lt':
-                return a < b
+    def cmp(op, a, b):
+        if op == 'gte':
+            return a >= b
+        elif op == 'lte':
+            return a <= b
+        elif op == 'gt':
+            return a > b
+        elif op == 'lt':
+            return a < b
 
-        def monitor(bot):
-            time.sleep(5)
-            if DEBUG: print(time.time(), "monitor() starting")
-            while True:
-                if DEBUG: print(time.time(), "monitor() len(bot.alerts_db): ", len(bot.alerts_db))
-                if len(bot.alerts_db):
-                    coins = {c['symbol']: c for c in get(coinmarketcap_all_url).json()}
-                alerted = False
-                #for (symbol, price, comparison) in list(bot.alerts_db):
-                for k in list(bot.alerts_db):
-                    symbol, price, comparison = dekey(k)
-                    if cmp(comparison, float(coins[symbol.upper()]['price_usd']), float(price)):
-                        for (unixtime, original_price, channel, nick) in bot.alerts_db[key(symbol, price, comparison)]:
-                            if comparison == 'gte':
-                                message = "{} {} USD. Up from {} USD on {}."
-                            elif comparison == 'lte':
-                                message = "{} {} USD. Down from {} USD on {}."
-                            date = time.asctime(time.localtime(float(unixtime)))
-                            message = message.format(symbol, coins[symbol.upper()]['price_usd'], original_price, date)
-                            bot.msg(channel, nick + ': ' + message)
-                        del bot.alerts_db[key(symbol, price, comparison)]
-                        alerted = True
+    @sopel.module.interval(60 * 1)
+    def monitor(bot):
+        if DEBUG: print(time.time(), "monitor() len(bot.alerts_db): ", len(bot.alerts_db))
+        if len(bot.alerts_db):
+            coins = {c['symbol']: c for c in get(coinmarketcap_all_url).json()}
+        alerted = False
+        for k in list(bot.alerts_db):
+            symbol, price, comparison = dekey(k)
+            if cmp(comparison, float(coins[symbol.upper()]['price_usd']), float(price)):
+                for (unixtime, original_price, channel, nick) in bot.alerts_db[key(symbol, price, comparison)]:
+                    if comparison == 'gte':
+                        message = "{} {} USD. Up from {} USD on {}."
+                    elif comparison == 'lte':
+                        message = "{} {} USD. Down from {} USD on {}."
+                    date = time.asctime(time.localtime(float(unixtime)))
+                    message = message.format(symbol, coins[symbol.upper()]['price_usd'], original_price, date)
+                    bot.msg(channel, nick + ': ' + message)
+                del bot.alerts_db[key(symbol, price, comparison)]
+                alerted = True
 
-                if alerted:
-                    dump_database(bot.alerts_fn, bot.alerts_db)
-
-                #time.sleep(60 * 10)
-                time.sleep(60 * 5)
-
-        targs = (bot,)
-        t = threading.Thread(target=monitor, args=targs)
-        t.start()
+        if alerted:
+            dump_database(bot.alerts_fn, bot.alerts_db)
 
     @sopel.module.commands('crypto')
     @sopel.module.example('.crypto btc eth neo')
