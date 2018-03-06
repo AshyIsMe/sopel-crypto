@@ -89,23 +89,21 @@ else:
         name = self.nick + '-' + self.config.core.host + '.cryptoalerts.db'
         return os.path.join(self.config.core.homedir, name)
 
-    def key(symbol, price, comparison):
-        return ",".join([symbol, str(price), comparison])
-
-    def dekey(key):
-        s, p, c = key.split(",")
-        return (s, p, c)
-
     def load_database(name):
         data = {}
         if os.path.isfile(name):
             with open(name) as json_file:
-                data = json.load(json_file)
+                #data = json.load(json_file)
+                try:
+                    data = {tuple(key.split(",")): value for key, value in json.load(json_file).items()}
+                except:
+                    data = {}
         return data
 
     def dump_database(name, data):
         with open(name, 'w') as json_file:
-            json.dump(data, json_file)
+            #json.dump(data, json_file)
+            json.dump({"{},{},{}".format(*x):y for x,y in data.items()}, json_file)
 
     def setup(bot):
         bot.alerts_fn = filename(bot)
@@ -127,10 +125,9 @@ else:
         if len(bot.alerts_db):
             coins = {c['symbol']: c for c in get(coinmarketcap_all_url).json()}
         alerted = False
-        for k in list(bot.alerts_db):
-            symbol, price, comparison = dekey(k)
+        for symbol, price, comparison in list(bot.alerts_db):
             if cmp(comparison, float(coins[symbol.upper()]['price_usd']), float(price)):
-                for (unixtime, original_price, channel, nick) in bot.alerts_db[key(symbol, price, comparison)]:
+                for (unixtime, original_price, channel, nick) in bot.alerts_db[symbol, price, comparison]:
                     if comparison == 'gte':
                         message = "{} {} USD. Up from {} USD on {}."
                     elif comparison == 'lte':
@@ -138,7 +135,7 @@ else:
                     date = time.asctime(time.localtime(float(unixtime)))
                     message = message.format(symbol, coins[symbol.upper()]['price_usd'], original_price, date)
                     bot.msg(channel, nick + ': ' + message)
-                del bot.alerts_db[key(symbol, price, comparison)]
+                del bot.alerts_db[symbol, price, comparison]
                 alerted = True
 
         if alerted:
@@ -182,9 +179,9 @@ else:
             comparison = 'lte'
         alert = (time.time(), coin['price_usd'], trigger.sender, trigger.nick)
         try:
-            bot.alerts_db[key(symbol, price, comparison)].append(alert)
+            bot.alerts_db[symbol, price, comparison].append(alert)
         except KeyError:
-            bot.alerts_db[key(symbol, price, comparison)] = [alert]
+            bot.alerts_db[symbol, price, comparison] = [alert]
         dump_database(bot.alerts_fn, bot.alerts_db)
 
         bot.reply("Okay, will alert when {} is {} {} USD"
