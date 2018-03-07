@@ -93,17 +93,15 @@ else:
         data = {}
         if os.path.isfile(name):
             with open(name) as json_file:
-                #data = json.load(json_file)
                 try:
-                    data = {tuple(key.split(",")): value for key, value in json.load(json_file).items()}
+                    data = {tuple(json.loads(key)): value for key, value in json.load(json_file).items()}
                 except:
                     data = {}
         return data
 
     def dump_database(name, data):
         with open(name, 'w') as json_file:
-            #json.dump(data, json_file)
-            json.dump({"{},{},{}".format(*x):y for x,y in data.items()}, json_file)
+            json.dump({json.dumps(x):y for x,y in data.items()}, json_file)
 
     def setup(bot):
         bot.alerts_fn = filename(bot)
